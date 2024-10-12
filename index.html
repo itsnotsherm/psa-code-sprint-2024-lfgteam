@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Bin Packing Visualization</title>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            font-family: Helvetica, Arial, sans-serif;
+        }
+        #topbar {
+            width: 100%;
+            padding: 15px 20px;
+            background-color: #000000;
+            color: #ffffff;
+            display: flex;
+            justify-content: flex-start;
+            align-items: center;
+            gap: 20px;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            padding: 5px;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        input {
+            width: 60px;
+            padding: 6px;
+            text-align: center;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049; /* Slightly darker green */
+        }
+        #resetbutton {
+            padding: 10px 20px;
+            background-color: #8B0000;
+            color: #ffffff;
+            border: none;
+            cursor: pointer;
+        }
+        #resetbutton:hover {
+            background-color: #a30000; /* Slightly brighter red */
+        }
+        #container {
+            flex: 1;
+            background-color: #ffffff;
+        }
+        #errorMessage {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255, 0, 0, 0.8);
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 5px;
+            display: none;
+            z-index: 1000;
+        }
+    </style>
+</head>
+<body>
+<div id="topbar">
+    <div class="control-group">
+        <h2>Bin Settings</h2>
+        <div class="input-group">
+            <label for="binWidth">Width:</label>
+            <input type="number" id="binWidth" placeholder="10" />
+            <label for="binHeight">Height:</label>
+            <input type="number" id="binHeight" placeholder="10" />
+            <label for="binDepth">Depth:</label>
+            <input type="number" id="binDepth" placeholder="10" />
+            <button id="setBinDimensions">Set Dimensions</button>
+            <button id="resetbutton">Reset</button>
+        </div>
+    </div>
+
+    <div class="control-group">
+        <h2>Add Box</h2>
+        <div class="input-group">
+            <label for="boxWidth">Width:</label>
+            <input type="number" id="boxWidth" placeholder="3" />
+            <label for="boxHeight">Height:</label>
+            <input type="number" id="boxHeight" placeholder="3" />
+            <label for="boxDepth">Depth:</label>
+            <input type="number" id="boxDepth" placeholder="3" />
+            <button id="addBox">Add Box</button>
+        </div>
+    </div>
+</div>
+<div id="container"></div>
+<div id="errorMessage"></div>
+
+<!-- Reference to the bundled script -->
+<script src="dist/bundle.js"></script>
+</body>
+</html>

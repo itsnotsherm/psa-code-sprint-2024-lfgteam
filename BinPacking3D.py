@@ -1,5 +1,6 @@
 import torch
 
+
 class BinPacking3D:
     def __init__(self, container_dim):
         self.container_dim = torch.tensor(container_dim)  # Container dimensions as a PyTorch tensor
@@ -25,6 +26,7 @@ class BinPacking3D:
         """Calculate the efficiency based on the filled volume."""
         container_volume = torch.prod(self.container_dim)
         return (self.filled_volume / container_volume).item()
+
 
 # Usage
 container_dim = [10, 10, 10]  # Example container dimensions
