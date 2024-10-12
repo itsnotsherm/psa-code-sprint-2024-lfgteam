@@ -4,7 +4,8 @@ import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 let scene, camera, renderer, containerMesh;
 let containerSize = [10, 10, 10];
 let items = [];
-let currentY = -containerSize[1] / 2;
+let occupiedSpaces = []; // Tracks occupied space in the container
+let currentY = -containerSize[1] / 2; // Start from the bottom
 
 // Initialize the 3D scene
 function initScene() {
@@ -25,7 +26,8 @@ function initScene() {
 
     const controls = new OrbitControls(camera, renderer.domElement);
     window.addEventListener('resize', onWindowResize);
-    animate();
+
+    animate(); // Call the animation loop
 }
 
 // Handle window resize
@@ -35,66 +37,90 @@ function onWindowResize() {
     renderer.setSize(window.innerWidth, window.innerHeight);
 }
 
-// Set container dimensions and update scene
-function setContainerDimensions(width, height, depth) {
-    containerSize = [width, height, depth];
-    currentY = -containerSize[1] / 2;
-    clearItems(); // Clear items when resetting container
-
-    if (containerMesh) {
-        scene.remove(containerMesh);
-        containerMesh.geometry.dispose();
-        containerMesh.material.dispose();
-    }
-
-    const containerGeometry = new THREE.BoxGeometry(width, height, depth);
-    const containerMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
-    containerMesh = new THREE.Mesh(containerGeometry, containerMaterial);
-    scene.add(containerMesh);
-
+// Animation loop to render the scene
+function animate() {
+    requestAnimationFrame(animate);
     renderer.render(scene, camera);
 }
 
-// Update addBox function to handle size checks and display corresponding error messages
+function canFitAtPosition(x, y, z, width, height, depth) {
+    // Ensure box is within container bounds
+    if (x + width / 2 > containerSize[0] / 2 || x - width / 2 < -containerSize[0] / 2 ||
+        y + height / 2 > containerSize[1] / 2 || y - height / 2 < -containerSize[1] / 2 ||
+        z + depth / 2 > containerSize[2] / 2 || z - depth / 2 < -containerSize[2] / 2) {
+        return false;
+    }
+
+    // Check for overlap with existing boxes
+    for (let space of occupiedSpaces) {
+        if (!(x + width / 2 <= space.x - space.width / 2 || x - width / 2 >= space.x + space.width / 2 ||
+              y + height / 2 <= space.y - space.height / 2 || y - height / 2 >= space.y + space.height / 2 ||
+              z + depth / 2 <= space.z - space.depth / 2 || z - depth / 2 >= space.z + space.depth / 2)) {
+            return false;
+        }
+    }
+
+    // Check gravity (must be on the floor or supported by another box)
+    if (y - height / 2 === -containerSize[1] / 2) {
+        return true; // On the floor
+    }
+
+    // Otherwise, check for support below
+    for (let space of occupiedSpaces) {
+        if (Math.abs(x - space.x) <= space.width / 2 &&
+            Math.abs(z - space.z) <= space.depth / 2 &&
+            Math.abs((y - height / 2) - (space.y + space.height / 2)) < 0.01) {
+            return true; // Supported by a box directly underneath
+        }
+    }
+
+    return false; // No support beneath, would be floating
+}
+
+// Find position for a new box
+function findPositionForBox(width, height, depth) {
+    const step = 1;
+    for (let x = -containerSize[0] / 2; x <= containerSize[0] / 2; x += step) {
+        for (let y = -containerSize[1] / 2; y <= containerSize[1] / 2; y += step) {
+            for (let z = -containerSize[2] / 2; z <= containerSize[2] / 2; z += step) {
+                if (canFitAtPosition(x, y, z, width, height, depth)) {
+                    return { x, y, z };
+                }
+            }
+        }
+    }
+    return null;
+}
+
+// Add a box to the container
 function addBox(width, height, depth) {
-    // Check for positive dimensions
     if (width <= 0 || height <= 0 || depth <= 0) {
         showError("Box dimensions must be greater than zero.");
         return;
     }
-
-    // Check if the box would exceed the container's width or depth
-    if (width > containerSize[0] || depth > containerSize[2]) {
-        showError("Box exceeds container width or depth.");
+    if (width > containerSize[0] || depth > containerSize[2] || height > containerSize[1]) {
+        showError("Box exceeds container dimensions.");
         return;
     }
 
-    // If no items exist, initialize currentY from the container base
-    if (items.length === 0) {
-        currentY = -containerSize[1] / 2; // Reset to the bottom of the container
-    }
+    const position = findPositionForBox(width, height, depth);
 
-    // Check if the new box would exceed the bin's height limit
-    if (currentY + height > containerSize[1] / 2) {
-        showError("Box exceeds container height.");
+    if (position === null) {
+        showError("No available space. Box is too big.");
         return;
     }
 
-    // Create and position the box
     const boxGeometry = new THREE.BoxGeometry(width, height, depth);
     const boxMaterial = new THREE.MeshBasicMaterial({ color: getRandomColor() });
     const boxMesh = new THREE.Mesh(boxGeometry, boxMaterial);
-
-    // Position and add the box
-    currentY += height / 2; // Center box at the currentY position
-    boxMesh.position.set(0, currentY, 0);
-    currentY += height / 2; // Update currentY for the next box
+    boxMesh.position.set(position.x, position.y, position.z);
 
     scene.add(boxMesh);
     items.push(boxMesh);
+    occupiedSpaces.push({ x: position.x, y: position.y, z: position.z, width, height, depth });
 }
 
-// Function to show an error message for 3 seconds
+// Show an error message
 function showError(message) {
     const errorDiv = document.getElementById('errorMessage');
     errorDiv.innerText = message;
@@ -104,13 +130,12 @@ function showError(message) {
     }, 3000);
 }
 
-
-// Generate a random color for each new box
+// Generate a random color
 function getRandomColor() {
     return Math.floor(Math.random() * 0xffffff);
 }
 
-// Clear all items (boxes) from the scene
+// Clear all items from the scene
 function clearItems() {
     items.forEach(item => {
         scene.remove(item);
@@ -118,13 +143,15 @@ function clearItems() {
         item.material.dispose();
     });
     items = [];
+    occupiedSpaces = [];
     currentY = -containerSize[1] / 2;
 }
 
-// Function to reset the container to default size and clear items
+// Reset the container to default size and clear items
 function resetContainer() {
     containerSize = [10, 10, 10];
-    currentY = -containerSize[1] / 2; // Reset stacking to the bottom of the container
+    currentY = -containerSize[1] / 2;
+    occupiedSpaces = [];
 
     document.getElementById('binWidth').value = 10;
     document.getElementById('binHeight').value = 10;
@@ -146,9 +173,23 @@ function resetContainer() {
     renderer.render(scene, camera);
 }
 
-// Animation loop
-function animate() {
-    requestAnimationFrame(animate);
+// Set the container dimensions based on user input and update the scene
+function setContainerDimensions(width, height, depth) {
+    containerSize = [width, height, depth];
+    currentY = -containerSize[1] / 2;
+    clearItems();
+
+    if (containerMesh) {
+        scene.remove(containerMesh);
+        containerMesh.geometry.dispose();
+        containerMesh.material.dispose();
+    }
+
+    const containerGeometry = new THREE.BoxGeometry(width, height, depth);
+    const containerMaterial = new THREE.MeshBasicMaterial({ color: 0x000000, wireframe: true });
+    containerMesh = new THREE.Mesh(containerGeometry, containerMaterial);
+    scene.add(containerMesh);
+
     renderer.render(scene, camera);
 }
 
@@ -160,7 +201,6 @@ document.getElementById("setBinDimensions").addEventListener("click", () => {
     setContainerDimensions(width, height, depth);
 });
 
-// Event listener to add a box with dimension constraints
 document.getElementById("addBox").addEventListener("click", () => {
     const width = parseFloat(document.getElementById("boxWidth").value);
     const height = parseFloat(document.getElementById("boxHeight").value);
