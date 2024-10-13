@@ -79,7 +79,7 @@ function canFitAtPosition(x, y, z, width, height, depth) {
 
 // Find position for a new box
 function findPositionForBox(width, height, depth) {
-    const step = 1;
+    const step = 0.5;
     for (let x = -containerSize[0] / 2; x <= containerSize[0] / 2; x += step) {
         for (let y = -containerSize[1] / 2; y <= containerSize[1] / 2; y += step) {
             for (let z = -containerSize[2] / 2; z <= containerSize[2] / 2; z += step) {
