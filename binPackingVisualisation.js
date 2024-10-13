@@ -5,6 +5,7 @@ let scene, camera, renderer, containerMesh;
 let containerSize = [10, 10, 10];
 let items = [];
 let occupiedSpaces = []; // Tracks occupied space in the container
+let packedVolume = 0;
 let currentY = -containerSize[1] / 2; // Start from the bottom
 
 // Initialize the 3D scene
@@ -118,6 +119,8 @@ function addBox(width, height, depth) {
     scene.add(boxMesh);
     items.push(boxMesh);
     occupiedSpaces.push({ x: position.x, y: position.y, z: position.z, width, height, depth });
+
+    updateFeedback(); // Update feedback after adding a box
 }
 
 // Show an error message
@@ -171,6 +174,8 @@ function resetContainer() {
     scene.add(containerMesh);
 
     renderer.render(scene, camera);
+
+    updateFeedback();
 }
 
 // Set the container dimensions based on user input and update the scene
@@ -191,6 +196,33 @@ function setContainerDimensions(width, height, depth) {
     scene.add(containerMesh);
 
     renderer.render(scene, camera);
+
+    updateFeedback();
+}
+
+// Update feedback on the page when container reset or box is added
+function updateFeedback() {
+    // Ensure containerSize is defined and has valid dimensions
+    if (!containerSize || containerSize.length !== 3 || containerSize.some(dim => dim <= 0)) {
+        console.error('Invalid container size');
+        return;
+    }
+
+    const totalVolume = containerSize[0] * containerSize[1] * containerSize[2];
+
+    // Ensure totalVolume is not zero to avoid division by zero
+    if (totalVolume === 0) {
+        console.error('Total volume is zero');
+        return;
+    }
+
+    const packedVolume = items.reduce((sum, item) => sum + (item.width * item.height * item.depth), 0);
+    const remainingVolume = totalVolume - packedVolume;
+    const spaceUtilization = (packedVolume / totalVolume) * 100;
+
+    document.getElementById('spaceUtilization').innerText = `${spaceUtilization.toFixed(2)}%`;
+    document.getElementById('itemsPacked').innerText = items.length;
+    document.getElementById('remainingSpace').innerText = remainingVolume.toFixed(2);
 }
 
 // Event listeners
