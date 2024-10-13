@@ -72,6 +72,15 @@
             display: none;
             z-index: 1000;
         }
+
+        #feedback {
+        position: absolute;
+        top: 200x;
+        left: 15px;
+        background: rgba(255, 255, 255, 0.8);
+        padding: 10px;
+        border-radius: 5px;
+    }
     </style>
 </head>
 <body>
@@ -103,7 +112,13 @@
         </div>
     </div>
 </div>
-<div id="container"></div>
+<div id="container">
+    <div id="feedback">
+        <p>Space Utilization: <span id="spaceUtilization">0%</span></p>
+        <p>Number of Items Packed: <span id="itemsPacked">0</span></p>
+        <p>Remaining Space: <span id="remainingSpace">0</span></p>
+    </div>
+</div>
 <div id="errorMessage"></div>
 
 <!-- Reference to the bundled script -->
