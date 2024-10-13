@@ -120,6 +120,7 @@ function addBox(width, height, depth) {
     items.push(boxMesh);
     occupiedSpaces.push({ x: position.x, y: position.y, z: position.z, width, height, depth });
 
+    packedVolume += width * height * depth;
     updateFeedback(); // Update feedback after adding a box
 }
 
@@ -147,18 +148,28 @@ function clearItems() {
     });
     items = [];
     occupiedSpaces = [];
+    packedVolume = 0;
     currentY = -containerSize[1] / 2;
 }
 
 // Reset the container to default size and clear items
 function resetContainer() {
-    containerSize = [10, 10, 10];
+    // Read current values from input fields
+    const width = parseFloat(document.getElementById('binWidth').value);
+    const height = parseFloat(document.getElementById('binHeight').value);
+    const depth = parseFloat(document.getElementById('binDepth').value);
+
+    // Validate the input values
+    if (isNaN(width) || isNaN(height) || isNaN(depth) || width <= 0 || height <= 0 || depth <= 0) {
+        showError("Invalid bin dimensions.");
+        return;
+    }
+
+    // Update containerSize with current values
+    containerSize = [width, height, depth];
+
     currentY = -containerSize[1] / 2;
     occupiedSpaces = [];
-
-    document.getElementById('binWidth').value = 10;
-    document.getElementById('binHeight').value = 10;
-    document.getElementById('binDepth').value = 10;
 
     clearItems();
 
@@ -174,8 +185,7 @@ function resetContainer() {
     scene.add(containerMesh);
 
     renderer.render(scene, camera);
-
-    updateFeedback();
+    resetFeedback();
 }
 
 // Set the container dimensions based on user input and update the scene
@@ -216,13 +226,19 @@ function updateFeedback() {
         return;
     }
 
-    const packedVolume = items.reduce((sum, item) => sum + (item.width * item.height * item.depth), 0);
     const remainingVolume = totalVolume - packedVolume;
     const spaceUtilization = (packedVolume / totalVolume) * 100;
 
     document.getElementById('spaceUtilization').innerText = `${spaceUtilization.toFixed(2)}%`;
     document.getElementById('itemsPacked').innerText = items.length;
     document.getElementById('remainingSpace').innerText = remainingVolume.toFixed(2);
+}
+
+// Function to reset feedback values
+function resetFeedback() {
+    document.getElementById('spaceUtilization').innerText = '0%';
+    document.getElementById('itemsPacked').innerText = '0';
+    document.getElementById('remainingSpace').innerText = containerSize[0] * containerSize[1] * containerSize[2];
 }
 
 // Event listeners
