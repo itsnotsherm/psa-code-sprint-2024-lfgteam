@@ -1,7 +1,7 @@
 const path = require('path');
 
 module.exports = {
-  entry: './binPackingVisualisation.js',
+  entry: './client/src/binPackingVisualisation.js', 
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'dist'),
